@@ -18,18 +18,22 @@ class Piece():
         left = self.left
 
         if n == 0:
+            # print("no turn")
             pass
-        if n == 1 or -3:
+        if n == 1 or n == -3:
+            # print("turn 1 or -3")
             self.top = left
             self.right = top
             self.down = right
             self.left = down
-        if n == 2 or -2:
+        if n == 2 or n == -2:
+            # print("turn 2 or -2")
             self.top = down
             self.right = left
             self.down = top
             self.left = right
-        if n == 3 or -1:
+        if n == 3 or n == -1:
+            # print("turn 3 or -1")
             self.top = right
             self.right = down
             self.down = left
@@ -46,32 +50,32 @@ class Solution():
         self.col_mismatch = 0
         self.score = 0
         self.generation = 0
-        self.chromosome = [None]*64 # set of pieces
+        self.chromosome = seed # set of pieces
 
         # shuffle index 0-63
-        index_scramble = list(range(0,64))
+        # index_scramble = list(range(0,64))
 
-        # print(index_scramble)
+        # # print(index_scramble)
 
-        random.shuffle(index_scramble)
+        # random.shuffle(index_scramble)
 
-        # print(index_scramble)
+        # # print(index_scramble)
 
-        # fill the chromosome with pieces at shuffled locations, with possible rotations
-        for piece in seed:
-            i = index_scramble.pop()
-            # print("insert in spot ", i)
-            # piece.show_piece()
+        # # fill the chromosome with pieces at shuffled locations, with possible rotations
+        # for piece in seed:
+        #     i = index_scramble.pop()
+        #     # print("insert in spot ", i)
+        #     # piece.show_piece()
 
-            if random.random() < 0.05:
-                # print("turned")
-                # piece.show_piece()
-                turned_piece = piece
-                turned_piece.turn(random.randint(-3, 3))
-                self.chromosome[i] = turned_piece
-                # turned_piece.show_piece()
-            else:
-                self.chromosome[i] = piece
+        #     if random.random() < 0.05:
+        #         # print("turned")
+        #         # piece.show_piece()
+        #         turned_piece = piece
+        #         turned_piece.turn(random.randint(-3, 3))
+        #         self.chromosome[i] = turned_piece
+        #         # turned_piece.show_piece()
+        #     else:
+        #         self.chromosome[i] = piece
 
         # for piece in self.chromosome:
         #     if piece == None:
@@ -79,31 +83,46 @@ class Solution():
         #     else:
         #         piece.show_piece()
 
-    # def randomize(self):
-    #      # shuffle index 0-63
-    #     index_scramble = list(range(0,64))
+    def randomize(self):
+        # doesnt work for some reason
+        # shuffle index 0-63
+        # index_scramble = list(range(0,64))
 
-    #     # print(index_scramble)
+        # print(index_scramble)
 
-    #     random.shuffle(index_scramble)
+        # random.shuffle(index_scramble)
 
-    #     # print(index_scramble)
+        # print(index_scramble)
 
-    #     # fill the chromosome with pieces at shuffled locations, with possible rotations
-    #     for piece in seed:
-    #         i = index_scramble.pop()
-    #         # print("insert in spot ", i)
-    #         # piece.show_piece()
+        # temp = self.chromosome
 
-    #         if random.random() < 0.05:
-    #             # print("turned")
-    #             # piece.show_piece()
-    #             turned_piece = piece
-    #             turned_piece.turn(random.randint(-3, 3))
-    #             self.chromosome[i] = turned_piece
-    #             # turned_piece.show_piece()
-    #         else:
-    #             self.chromosome[i] = piece
+        random.shuffle(self.chromosome)
+
+        # fill the chromosome with pieces at shuffled locations, with possible rotations
+        for piece in self.chromosome:
+            # i = index_scramble.pop()
+            # print("insert in spot ", i)
+            # piece.show_piece()
+
+            if random.random() < 0.05:
+                # print("turned")
+                # piece.show_piece()
+                # turned_piece = piece
+                # turned_piece.turn(random.randint(-3, 3))
+                # self.chromosome[i] = turned_piece
+                # turned_piece.show_piece()
+
+                # print("turning")
+                # piece.show_piece()
+
+                piece.turn(random.randint(-3, 3))
+                
+                # piece.show_piece()
+
+            # else:
+            #     self.chromosome[i] = piece
+        
+        # self.show_solution()
 
     def show_solution(self):
         print("solution: ")
@@ -152,12 +171,19 @@ class Solution():
         print("row mismatch: ", sum_row)
         print("column mismatch: ", sum_col)
 
-    def crossover(self, other_solution):
+    def crossover(self, other_solution, seed):
         # need to implement crossover for permutations
-        pass
+        # seed = [None]*64
+        
+        child1 = other_solution.chromosome
+        child2 = other_solution.chromosome
 
-        # children = []
-        # return children
+        children = [Solution(seed), Solution(seed)]
+
+        children[0].chromosome = child1
+        children[1].chromosome = child2
+
+        return children
 
     def mutation(self, rate):
         for i in range(len(self.chromosome)):
@@ -231,40 +257,39 @@ class Genetic_algorithm():
         self.display()
 
         # iterate to evolve
-        # for generation in range(num_gens):
-        #     sum = self.overall_score()
+        for generation in range(num_gens):
+            sum = self.overall_score()
 
-        #     new_population = []
+            new_population = []
 
-        #     for new_solutions in range(0, self.population_size, 2):
-        #         parent1 = self.select_parent(sum)
-        #         parent2 = self.select_parent(sum)
+            for new_solutions in range(0, self.population_size, 2):
+                parent1 = self.select_parent(sum)
+                parent2 = self.select_parent(sum)
 
-        #         children = self.population[parent1].crossover(self.population[parent2])
+                children = self.population[parent1].crossover(self.population[parent2], seed)
 
-        #         new_population.append(children[0].mutation(mutation_rate))
-        #         new_population.append(children[1].mutation(mutation_rate))
+                new_population.append(children[0].mutation(mutation_rate))
+                new_population.append(children[1].mutation(mutation_rate))
 
-        #     self.population = list(new_population)
+            self.population = new_population
 
-        #     for solution in self.population:
-        #         solution.fitness()
+            for solution in self.population:
+                solution.fitness()
 
-        #     self.order_population()
+            self.order_population()
 
-        #     self.top_solution = self.population[0]
-        #     self.solution_track.append(self.top_solution.score)
-        #     self.compute_top()
+            self.top_solution = self.population[0]
+            self.solution_track.append(self.top_solution.score)
+            self.compute_top()
 
         print("top solution score: ", self.top_solution.score)
 
-        # for loop iterations
 
         return self.top_solution
 
         
 
-# main
+# # main
 finput = open("Ass1Input.txt", "r")
 seed = []
 for i in range(0, 64):
@@ -274,6 +299,26 @@ for i in range(0, 64):
 for piece in seed:
     piece.show_piece()
 
+
+
+# s1 = Solution(seed)
+# print("solution 1:")
+# s1.randomize()
+# s1.show_solution()
+
+
+# s2 = Solution(seed)
+# print("solution 2:")
+# s2.randomize()
+# s2.show_solution()
+
+# children = s1.crossover(s2, seed)
+
+# print("child 1:")
+# children[0].show_solution()
+
+# print("child 2:")
+# children[1].show_solution()
 
 population_size = int(input("enter population size: "))
 number_generations = int(input("enter number of generations: "))
