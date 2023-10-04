@@ -155,7 +155,7 @@ class Solution():
         #     piece.show_piece()
         #     x += 1
 
-        # count column and row mismatch, make this better ?
+        # count column and row mismatch, TODO: make this better ?
         for i in range(len(self.chromosome)):
             # print(i)
             # skip every 8th piece
@@ -176,7 +176,7 @@ class Solution():
         # print("column mismatch: ", sum_col)
 
     def crossover(self, other_solution, seed):
-        # can also implement pmx, cycle, edge recomb
+        #TODO: can also implement pmx, cycle, edge recomb
 
         # print("parents: ")
         # self.show_solution()
@@ -243,18 +243,33 @@ class Solution():
             child2.chromosome[i] = self.chromosome[index2]
             index2 = (index2+1) % 64
 
-        # print("parents:")
-        # self.show_solution()
-        # other_solution.show_solution()
+        child1.fitness()
+        child2.fitness()
 
-        # print("children:")
-        # child1.show_solution()
-        # child2.show_solution()
+        new_parent1 = copy.deepcopy(self)
+        new_parent1.generation +=1
 
-        return [child1, child2]
+        new_parent2 = copy.deepcopy(other_solution)
+        new_parent2.generation +=1
+
+        candidates = [new_parent1, new_parent2, child1, child2]
+
+        # print("\n\ncandidate solutions (p1, p2, c1, c2)")
+        # for solution in candidates:            
+        #     solution.show_solution()
+
+        candidates = sorted(candidates, key=lambda candidates: candidates.score)
+
+        children = candidates[0:2]
+
+        # print("\n\npicked solutions")
+        # for solution in children:
+        #     solution.show_solution()
+
+        return children
 
     def mutation(self, rate):
-        # can also implement swap, insert, scramble, inversion
+        #TODO: can also implement swap, insert, scramble, inversion
         for i in range(len(self.chromosome)):
             if random.random() < rate: 
                 # print("turning piece: ", i)
@@ -265,7 +280,7 @@ class Genetic_algorithm():
     def __init__(self, population_size):
         self.population_size = population_size
         self.population = []
-        self.generation = 0
+        # self.generation = 0
         self.top_solution = None
         self.solution_track = []
 
@@ -298,6 +313,7 @@ class Genetic_algorithm():
         return sum
     
     def select_parent(self, overall_score):
+        #TODO: can try fitness proportionate, rank based, linear, exponential, tournament, uniform, 
         parent = -1
 
         ran = random.random() * overall_score
@@ -313,7 +329,8 @@ class Genetic_algorithm():
 
     def display(self):
         print("generation: ", self.population[0].generation)
-        print("top (lowest) score: ", self.population[0].score)
+        print("generation top (lowest) score: ", self.population[0].score)
+        print("current top (lowest) score: ", self.top_solution.score, self.top_solution.generation)
         print("overall score: ", self.overall_score())
         # self.population[0].show_solution()
 
@@ -351,6 +368,7 @@ class Genetic_algorithm():
                 parent2 = self.select_parent(sum)
 
                 children = self.population[parent1].crossover(self.population[parent2], seed)
+                #TODO: could try saving all parents + children for tournament survivor selection
 
                 # print("\nparents: ", parent1, parent2)
 
@@ -358,9 +376,10 @@ class Genetic_algorithm():
                 # children[0].show_solution()
                 # children[1].show_solution()
 
-                child1 = copy.deepcopy(children[0])
-                child2 = copy.deepcopy(children[1])
+                child1 = children[0] #copy.deepcopy(children[0])
+                child2 = children[1] #copy.deepcopy(children[1])
 
+                #TODO: perhaps check if mutation goes in the right direciton?
                 child1.mutation(mutation_rate)
                 child2.mutation(mutation_rate)
 
@@ -371,18 +390,45 @@ class Genetic_algorithm():
             # for solution in new_population:
             #     solution.show_solution()
 
-            self.population = new_population
-
-            for solution in self.population:
-                # solution.show_solution()
-                solution.fitness()
+            
 
             # print("\n\n================= order population =================")
+
+            # for solution in new_population:
+            #     # solution.show_solution()
+            #     solution.fitness()
+
+            # new_sum = 0
+            # for solution in new_population:
+            #     new_sum += solution.score
+
+            # if new_sum < sum:
+            #     print("picked new pop")
+            #     self.population = new_population
+            #     self.order_population()
+            #     self.compute_top(self.population[0])
+            # else:
+            #     print("picked old pop")
+            #     for solution in self.population:
+            #         solution.generation = self.population[0].generation + 1
+
+
+            self.population = new_population
+
+            # for solution in self.population:
+            #     # solution.show_solution()
+            #     solution.fitness()
+
             self.order_population()
 
-            self.display()
+            self.compute_top(self.population[0])                
+            
             self.solution_track.append(self.population[0].score)
-            self.compute_top(self.population[0])
+
+            self.display()
+
+            # self.generation += 1
+            
 
         print("top solution score: ", self.top_solution.score)
 
@@ -445,11 +491,13 @@ finput.close()
 
 population_size = int(input("enter population size: "))
 number_generations = int(input("enter number of generations: "))
-mutation_rate = int(input("enter mutation rate (0-100): "))/100
+mutation_rate = float(input("enter mutation rate (0-100): "))/100
 
 GA = Genetic_algorithm(population_size)
 
 solution_found = GA.evolve(mutation_rate, number_generations, seed)
+
+solution_found.show_solution()
 
 foutput = open("Ass1Output.txt", "w")
 
