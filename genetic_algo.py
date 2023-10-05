@@ -12,6 +12,7 @@ class Piece():
         self.down = down
         self.left = left
 
+    # turn by how much (+clockwise, -counter)
     def turn(self, n):
         top = self.top
         right = self.right
@@ -55,76 +56,16 @@ class Solution():
 
         if seed is not None:
             self.chromosome = seed
-        # shuffle index 0-63
-        # index_scramble = list(range(0,64))
 
-        # # print(index_scramble)
-
-        # random.shuffle(index_scramble)
-
-        # # print(index_scramble)
-
-        # # fill the chromosome with pieces at shuffled locations, with possible rotations
-        # for piece in seed:
-        #     i = index_scramble.pop()
-        #     # print("insert in spot ", i)
-        #     # piece.show_piece()
-
-        #     if random.random() < 0.05:
-        #         # print("turned")
-        #         # piece.show_piece()
-        #         turned_piece = piece
-        #         turned_piece.turn(random.randint(-3, 3))
-        #         self.chromosome[i] = turned_piece
-        #         # turned_piece.show_piece()
-        #     else:
-        #         self.chromosome[i] = piece
-
-        # for piece in self.chromosome:
-        #     if piece == None:
-        #         print("none piece")
-        #     else:
-        #         piece.show_piece()
-
+    # shuffle chromosome
     def randomize(self):
-        # doesnt work for some reason
-        # shuffle index 0-63
-        # index_scramble = list(range(0,64))
-
-        # print(index_scramble)
-
-        # random.shuffle(index_scramble)
-
-        # print(index_scramble)
-
-        # temp = self.chromosome
-
         random.shuffle(self.chromosome)
 
-        # fill the chromosome with pieces at shuffled locations, with possible rotations
+        # fill the chromosome with pieces at shuffled locations, with possible rotations (maybe make dependant on mutation rate?)
         for piece in self.chromosome:
-            # i = index_scramble.pop()
-            # print("insert in spot ", i)
-            # piece.show_piece()
-
             if random.random() < 0.05:
-                # print("turned")
+                piece.turn(random.randint(-3, 3))                
                 # piece.show_piece()
-                # turned_piece = piece
-                # turned_piece.turn(random.randint(-3, 3))
-                # self.chromosome[i] = turned_piece
-                # turned_piece.show_piece()
-
-                # print("turning")
-                # piece.show_piece()
-
-                piece.turn(random.randint(-3, 3))
-                
-                # piece.show_piece()
-
-            # else:
-            #     self.chromosome[i] = piece
-        
         # self.show_solution()
 
     def show_solution(self):
@@ -135,25 +76,17 @@ class Solution():
         for piece in self.chromosome:
             if piece == None:
                 print("none piece")
+                x += 1
             else:
                 print("spot: ", x)
                 piece.show_piece()
                 x += 1
-            # if piece != None:
-            #     print(piece.top, piece.right, piece.down, piece.left)
         
         print("score: ", self.score)
 
     def fitness(self):
         sum_row = 0
         sum_col = 0
-
-        # x = 0
-
-        # for piece in self.chromosome:
-        #     print("spot: ", x)
-        #     piece.show_piece()
-        #     x += 1
 
         # count column and row mismatch, TODO: make this better ?
         for i in range(len(self.chromosome)):
@@ -170,11 +103,11 @@ class Solution():
 
         self.row_mismatch = sum_row
         self.col_mismatch = sum_col
-        self.score = sum_row + sum_col
-
         # print("row mismatch: ", sum_row)
         # print("column mismatch: ", sum_col)
+        self.score = sum_row + sum_col        
 
+    # ordered crossover implementation
     def crossover(self, other_solution, seed):
         #TODO: can also implement pmx, cycle, edge recomb
 
@@ -182,35 +115,36 @@ class Solution():
         # self.show_solution()
         # other_solution.show_solution()
 
+        # create copy of parents (to avoid modifying them)
         child1 = copy.deepcopy(self)
         child1.generation = self.generation + 1
 
         child2 = copy.deepcopy(other_solution)
         child2.generation = self.generation + 1
 
+        # pick 2 crossover points in the chromosome
         crossover1 = random.randint(0, len(self.chromosome)-2)
         crossover2 = random.randint(crossover1+1, len(self.chromosome)-1)
-
         # print("crossovers: ", crossover1, crossover2)
 
+        # isolate the segment from the parents
         segment1 = self.chromosome[crossover1:crossover2]
         segment2 = other_solution.chromosome[crossover1:crossover2]
 
         used_ids1 = set()
         used_ids2 = set()
 
+        # identify the used pieces in each segment
         for i in range(len(segment1)):
             used_ids1.add(segment1[i].id)
-            used_ids2.add(segment2[i].id)
-            
+            used_ids2.add(segment2[i].id)            
         # print("segment1 piece ids: ", used_ids1)
         # print("segment2 piece ids: ", used_ids2)
 
+        # fill in children chromosome with opposing parent pieces, skipping over pieces already in respective segment
         index1 = crossover2
         index2 = crossover2
-
         # print("crossover after segment: ", crossover2)
-
         for i in range(crossover2, len(self.chromosome)):
             # print("sol index: ", i)
             while other_solution.chromosome[index1].id in used_ids1:
@@ -243,9 +177,11 @@ class Solution():
             child2.chromosome[i] = self.chromosome[index2]
             index2 = (index2+1) % 64
 
+        # check child fitness
         child1.fitness()
         child2.fitness()
 
+        # create new generation copy of parents (could maybe just update generation?)
         new_parent1 = copy.deepcopy(self)
         new_parent1.generation +=1
 
@@ -253,15 +189,14 @@ class Solution():
         new_parent2.generation +=1
 
         candidates = [new_parent1, new_parent2, child1, child2]
-
         # print("\n\ncandidate solutions (p1, p2, c1, c2)")
         # for solution in candidates:            
         #     solution.show_solution()
 
         candidates = sorted(candidates, key=lambda candidates: candidates.score)
 
+        # pick best 2 out of children and parents
         children = candidates[0:2]
-
         # print("\n\npicked solutions")
         # for solution in children:
         #     solution.show_solution()
@@ -287,14 +222,14 @@ class Genetic_algorithm():
     def initialize_population(self, seed):
         initial_solution = Solution(seed)
 
-
+        # create copy of initial solution (otherwise they all get modified in the same way)
         for i in range(self.population_size):
             sol = copy.deepcopy(initial_solution)
             sol.randomize()
             self.population.append(sol)
         
+        # save current best solution (random)
         self.top_solution = self.population[0]
-
         # print("first population:")
         # for solution in self.population:
         #     solution.show_solution()
@@ -302,10 +237,12 @@ class Genetic_algorithm():
     def order_population(self):
         self.population = sorted(self.population, key=lambda population: population.score)
         
+    # update top solution if a better one is found
     def compute_top(self, solution):
         if solution.score < self.top_solution.score:
             self.top_solution = solution
 
+    # computes generation total score (can also implement median perhaps?)
     def overall_score(self):
         sum = 0
         for solution in self.population:
@@ -313,7 +250,7 @@ class Genetic_algorithm():
         return sum
     
     def select_parent(self, overall_score):
-        #TODO: can try fitness proportionate, rank based, linear, exponential, tournament, uniform, 
+        #TODO: can try fitness proportionate, rank based, linear, exponential, tournament, uniform
         parent = -1
 
         ran = random.random() * overall_score
@@ -326,7 +263,8 @@ class Genetic_algorithm():
             i += 1
         
         return parent
-
+    
+    # show curren generation information
     def display(self):
         print("generation: ", self.population[0].generation)
         print("generation top (lowest) score: ", self.population[0].score)
@@ -343,7 +281,6 @@ class Genetic_algorithm():
             # solution.show_solution()
             solution.fitness()
 
-        # print("\n\n================= order population =================")
         self.order_population()
 
         self.top_solution = self.population[0]
@@ -355,7 +292,6 @@ class Genetic_algorithm():
 
         # iterate to evolve
         for generation in range(num_gens):
-            # print("\n\n================= ordered population =================")
             # for solution in self.population:
             #     solution.show_solution()
 
@@ -368,7 +304,7 @@ class Genetic_algorithm():
                 parent2 = self.select_parent(sum)
 
                 children = self.population[parent1].crossover(self.population[parent2], seed)
-                #TODO: could try saving all parents + children for tournament survivor selection
+                #TODO: could try saving all parents + children for tournament survivor selection, or generation more children than parents, etc
 
                 # print("\nparents: ", parent1, parent2)
 
@@ -379,21 +315,14 @@ class Genetic_algorithm():
                 child1 = children[0] #copy.deepcopy(children[0])
                 child2 = children[1] #copy.deepcopy(children[1])
 
-                #TODO: perhaps check if mutation goes in the right direciton?
+                #TODO: perhaps check if mutation goes in the right direciton, or have mutation rate change
                 child1.mutation(mutation_rate)
                 child2.mutation(mutation_rate)
 
                 new_population.append(child1)
                 new_population.append(child2)
 
-            print("\n\n================= new generation =================")
-            # for solution in new_population:
-            #     solution.show_solution()
-
-            
-
-            # print("\n\n================= order population =================")
-
+            print("\n\n================= new generation =================") 
             # for solution in new_population:
             #     # solution.show_solution()
             #     solution.fitness()
@@ -412,12 +341,11 @@ class Genetic_algorithm():
             #     for solution in self.population:
             #         solution.generation = self.population[0].generation + 1
 
-
             self.population = new_population
 
-            # for solution in self.population:
-            #     # solution.show_solution()
-            #     solution.fitness()
+            for solution in self.population:
+                # solution.show_solution()
+                solution.fitness()
 
             self.order_population()
 
@@ -427,8 +355,7 @@ class Genetic_algorithm():
 
             self.display()
 
-            # self.generation += 1
-            
+            # self.generation += 1            
 
         print("top solution score: ", self.top_solution.score)
 
@@ -436,7 +363,6 @@ class Genetic_algorithm():
         return self.top_solution
 
         
-
 # # main
 finput = open("Ass1Input.txt", "r")
 seed = []
@@ -488,10 +414,11 @@ finput.close()
 
 
 
-
+# get parameters from the user (perhaps remove mutation when we automate it)
 population_size = int(input("enter population size: "))
 number_generations = int(input("enter number of generations: "))
 mutation_rate = float(input("enter mutation rate (0-100): "))/100
+
 
 GA = Genetic_algorithm(population_size)
 
@@ -499,25 +426,19 @@ solution_found = GA.evolve(mutation_rate, number_generations, seed)
 
 solution_found.show_solution()
 
+# write solution to file
 foutput = open("Ass1Output.txt", "w")
-
 solution_str = "Mihai Olaru 40111734 Amir Cherif 40047635\n"
 for i in range(len(solution_found.chromosome)):
     piece = str(solution_found.chromosome[i].top) + str(solution_found.chromosome[i].right) + str(solution_found.chromosome[i].down) + str(solution_found.chromosome[i].left)
-    
     # print("piece: ", solution_found.chromosome[i].id)
-
     if i == 63:
         break
-
     if (i + 1) % 8 == 0:
         solution_str += piece + "\n"
     else:
         solution_str += piece + " "
-
 solution_str += piece
-
 # print(solution_str)
-
 foutput.write(solution_str)
 foutput.close()
