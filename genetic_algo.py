@@ -303,7 +303,16 @@ class Genetic_algorithm():
                 parent1 = self.select_parent(sum)
                 parent2 = self.select_parent(sum)
 
-                children = self.population[parent1].crossover(self.population[parent2], seed)
+
+                if random.random() < 1:  # this is where you set the rate of crossover
+                    children = self.population[parent1].crossover(self.population[parent2], seed)
+                else:
+                    new_parent1 = copy.deepcopy(self.population[parent1])
+                    new_parent1.generation +=1
+
+                    new_parent2 = copy.deepcopy(self.population[parent2])
+                    new_parent2.generation +=1
+                    children = [new_parent1, new_parent2]
                 #TODO: could try saving all parents + children for tournament survivor selection, or generation more children than parents, etc
 
                 # print("\nparents: ", parent1, parent2)
