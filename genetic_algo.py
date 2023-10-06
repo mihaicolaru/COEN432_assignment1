@@ -278,7 +278,7 @@ class Genetic_algorithm():
         # self.population[0].show_solution()
 
     # solve
-    def evolve(self, mutation_rate, cross_rate, num_gens, seed):
+    def evolve(self, mutation_rate, cross_rate, reassess_rate, num_gens, seed):
         print("\n\n================= init population =================")
         self.initialize_population(seed)
 
@@ -304,12 +304,13 @@ class Genetic_algorithm():
 
             new_population = []
 
-            if generation != 0 and generation % (num_gens/10) == 0:
-                print("adjusting rates")
-                num_prev = int(num_gens/10)
+            if generation != 0 and generation % (num_gens/reassess_rate) == 0:
+                print("#######################################################################################")
+                print("\nadjusting rates")
+                num_prev = int(num_gens/reassess_rate)
                 prev_sum = self.solution_track[-num_prev:]
 
-                print(prev_sum)
+                print("previous scores: ", prev_sum)
                 
                 prev_avg = 0
                 for i in range(len(prev_sum)):
@@ -317,21 +318,25 @@ class Genetic_algorithm():
 
                 prev_avg = prev_avg / num_prev
 
+                print("average of previous ", num_prev, " generation scores: ", prev_avg)
+                print("current population score: ", sum)
+
                 if sum < prev_avg:
                     # current result better than current avg
-                    # mutation_rate += 1.02
-                    # cross_rate /= 1.02
-                    pass
+                    print("decrease mutation, increase crossover")
+                    # mutation_rate /= 1.02
+                    # cross_rate *= 1.02
                 else:
                     # current result same or worse than current avg
+                    print("increase mutation, decrease crossover")
                     mutation_rate *= 1.02
                     cross_rate /= 1.02
 
-                print("#######################################################################################")
+                
 
                 print("new mutation", mutation_rate*100,"\ncrossover: ", cross_rate*100)
 
-                print("#######################################################################################")
+                print("\n#######################################################################################")
 
             for new_solutions in range(0, self.population_size, 2):
                 parent1 = self.select_parent(sum)
@@ -386,7 +391,7 @@ class Genetic_algorithm():
 
             self.compute_top(self.population[0])                
             
-            self.solution_track.append(self.population[0].score)
+            self.solution_track.append(sum)
 
             self.display()
 
@@ -447,15 +452,16 @@ finput.close()
 # get parameters from the user (perhaps remove mutation when we automate it)
 population_size = int(input("enter population size: "))
 number_generations = int(input("enter number of generations: "))
-# mutation_rate = float(input("enter mutation rate (0-100): "))/100
-# cross_rate = float(input("enter crossover rate (0-100): "))/100
-mutation_rate = float(0.1)/100
-cross_rate = float(100)/100
+mutation_rate = float(input("enter mutation rate (0-100): "))/100
+cross_rate = float(input("enter crossover rate (0-100): "))/100
+reassess_rate = int(input("reassess rate (1 - number of generations): "))
+# mutation_rate = float(0.1)/100
+# cross_rate = float(100)/100
 
 
 GA = Genetic_algorithm(population_size)
 
-solution_found = GA.evolve(mutation_rate, cross_rate, number_generations, seed)
+solution_found = GA.evolve(mutation_rate, cross_rate, reassess_rate, number_generations, seed)
 
 solution_found.show_solution()
 
