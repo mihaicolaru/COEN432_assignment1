@@ -291,7 +291,6 @@ class Genetic_algorithm():
         self.order_population()
 
         self.top_solution = self.population[0]
-        self.solution_track.append(self.top_solution.score)
 
         self.display()
 
@@ -485,12 +484,15 @@ solution_str += piece
 foutput.write(solution_str)
 foutput.close()
 
-plt.plot(GA.best_solution_track, population_size, label = "Best Score")
+print("GA.solution_track", GA.solution_track)
+print("GA.best_solution_track", GA.best_solution_track)
+
+plt.plot(number_generations, list(GA.best_solution_track), label = "Best Score")
 
 avg_score = []
 for i in range(len(GA.solution_track)):
     avg_score.append(GA.solution_track[i]/population_size)
-plt.plot(avg_score, population_size, label = "Average Score")
+plt.plot(number_generations, list(avg_score), label = "Average Score")
 
 # naming the x axis 
 plt.xlabel('Generation') 
