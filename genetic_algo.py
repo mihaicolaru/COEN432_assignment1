@@ -1,6 +1,7 @@
 # include libraries
 import random
 import copy
+import matplotlib.pyplot as plt
 
 # define components
 
@@ -224,6 +225,7 @@ class Genetic_algorithm():
         # self.generation = 0
         self.top_solution = None
         self.solution_track = []
+        self.best_solution_track = []
 
     def initialize_population(self, seed):
         initial_solution = Solution(seed)
@@ -392,6 +394,7 @@ class Genetic_algorithm():
             self.compute_top(self.population[0])                
             
             self.solution_track.append(sum)
+            self.best_solution_track.append(self.top_solution.score)
 
             self.display()
 
@@ -481,3 +484,19 @@ solution_str += piece
 # print(solution_str)
 foutput.write(solution_str)
 foutput.close()
+
+plt.plot(GA.best_solution_track, population_size, label = "Best Score")
+
+avg_score = []
+for i in range(len(GA.solution_track)):
+    avg_score.append(GA.solution_track[i]/population_size)
+plt.plot(avg_score, population_size, label = "Average Score")
+
+# naming the x axis 
+plt.xlabel('Generation') 
+# naming the y axis 
+plt.ylabel('Mismatches') 
+# show a legend on the plot 
+plt.legend()
+# function to show the plot 
+plt.show()
