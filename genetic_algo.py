@@ -217,7 +217,6 @@ class Solution():
                 # print("turning piece: ", i)
                 self.chromosome[i].turn(random.randint(-3, 3))
         
-
 class Genetic_algorithm():
     def __init__(self, population_size):
         self.population_size = population_size
@@ -305,10 +304,15 @@ class Genetic_algorithm():
 
             new_population = []
 
-            if generation % (num_gens/2) == 0:                
-                mutation_rate *= 1.5
-                cross_rate /= 3
-                print("new mutation, crossover: ", mutation_rate, cross_rate)
+            if generation % (num_gens/10) == 0:                
+                mutation_rate *= 1.02
+                cross_rate /= 1.02
+
+                print("#######################################################################################")
+
+                print("new mutation", mutation_rate*100,"\ncrossover: ", cross_rate*100)
+
+                print("#######################################################################################")
 
             for new_solutions in range(0, self.population_size, 2):
                 parent1 = self.select_parent(sum)
@@ -424,8 +428,11 @@ finput.close()
 # get parameters from the user (perhaps remove mutation when we automate it)
 population_size = int(input("enter population size: "))
 number_generations = int(input("enter number of generations: "))
-mutation_rate = float(input("enter mutation rate (0-100): "))/100
-cross_rate = float(input("enter crossover rate (0-100): "))/100
+# mutation_rate = float(input("enter mutation rate (0-100): "))/100
+# cross_rate = float(input("enter crossover rate (0-100): "))/100
+mutation_rate = float(0.1)/100
+cross_rate = float(100)/100
+
 
 GA = Genetic_algorithm(population_size)
 
