@@ -107,98 +107,106 @@ class Solution():
         self.score = sum_row + sum_col        
 
     # ordered crossover implementation
-    def crossover(self, other_solution, seed):
+    def crossover(self, other_solution, cross_rate):
         #TODO: can also implement pmx, cycle, edge recomb
 
-        # print("parents: ")
-        # self.show_solution()
-        # other_solution.show_solution()
+        if random.random() < cross_rate:  # this is where you set the rate of crossover
+            # print("parents: ")
+            # self.show_solution()
+            # other_solution.show_solution()
 
-        # create copy of parents (to avoid modifying them)
-        child1 = copy.deepcopy(self)
-        child1.generation = self.generation + 1
+            # create copy of parents (to avoid modifying them)
+            child1 = copy.deepcopy(self)
+            child1.generation = self.generation + 1
 
-        child2 = copy.deepcopy(other_solution)
-        child2.generation = self.generation + 1
+            child2 = copy.deepcopy(other_solution)
+            child2.generation = self.generation + 1
 
-        # pick 2 crossover points in the chromosome
-        crossover1 = random.randint(0, len(self.chromosome)-2)
-        crossover2 = random.randint(crossover1+1, len(self.chromosome)-1)
-        # print("crossovers: ", crossover1, crossover2)
+            # pick 2 crossover points in the chromosome
+            crossover1 = random.randint(0, len(self.chromosome)-2)
+            crossover2 = random.randint(crossover1+1, len(self.chromosome)-1)
+            # print("crossovers: ", crossover1, crossover2)
 
-        # isolate the segment from the parents
-        segment1 = self.chromosome[crossover1:crossover2]
-        segment2 = other_solution.chromosome[crossover1:crossover2]
+            # isolate the segment from the parents
+            segment1 = self.chromosome[crossover1:crossover2]
+            segment2 = other_solution.chromosome[crossover1:crossover2]
 
-        used_ids1 = set()
-        used_ids2 = set()
+            used_ids1 = set()
+            used_ids2 = set()
 
-        # identify the used pieces in each segment
-        for i in range(len(segment1)):
-            used_ids1.add(segment1[i].id)
-            used_ids2.add(segment2[i].id)            
-        # print("segment1 piece ids: ", used_ids1)
-        # print("segment2 piece ids: ", used_ids2)
+            # identify the used pieces in each segment
+            for i in range(len(segment1)):
+                used_ids1.add(segment1[i].id)
+                used_ids2.add(segment2[i].id)            
+            # print("segment1 piece ids: ", used_ids1)
+            # print("segment2 piece ids: ", used_ids2)
 
-        # fill in children chromosome with opposing parent pieces, skipping over pieces already in respective segment
-        index1 = crossover2
-        index2 = crossover2
-        # print("crossover after segment: ", crossover2)
-        for i in range(crossover2, len(self.chromosome)):
-            # print("sol index: ", i)
-            while other_solution.chromosome[index1].id in used_ids1:
-                # print("index1: ", index1)
+            # fill in children chromosome with opposing parent pieces, skipping over pieces already in respective segment
+            index1 = crossover2
+            index2 = crossover2
+            # print("crossover after segment: ", crossover2)
+            for i in range(crossover2, len(self.chromosome)):
+                # print("sol index: ", i)
+                while other_solution.chromosome[index1].id in used_ids1:
+                    # print("index1: ", index1)
+                    index1 = (index1+1) % 64
+                # print("selected index1: ", index1)
+                child1.chromosome[i] = other_solution.chromosome[index1]
                 index1 = (index1+1) % 64
-            # print("selected index1: ", index1)
-            child1.chromosome[i] = other_solution.chromosome[index1]
-            index1 = (index1+1) % 64
 
-            while self.chromosome[index2].id in used_ids2:
-                # print("index2: ", index2)
+                while self.chromosome[index2].id in used_ids2:
+                    # print("index2: ", index2)
+                    index2 = (index2+1) % 64
+                # print("selected index2: ", index2)
+                child2.chromosome[i] = self.chromosome[index2]
                 index2 = (index2+1) % 64
-            # print("selected index2: ", index2)
-            child2.chromosome[i] = self.chromosome[index2]
-            index2 = (index2+1) % 64
 
-        for i in range(crossover1):
-            # print("sol index: ", i)
-            while other_solution.chromosome[index1].id in used_ids1:
-                # print("index1: ", index1)
+            for i in range(crossover1):
+                # print("sol index: ", i)
+                while other_solution.chromosome[index1].id in used_ids1:
+                    # print("index1: ", index1)
+                    index1 = (index1+1) % 64
+                # print("selected index1: ", index1)
+                child1.chromosome[i] = other_solution.chromosome[index1]
                 index1 = (index1+1) % 64
-            # print("selected index1: ", index1)
-            child1.chromosome[i] = other_solution.chromosome[index1]
-            index1 = (index1+1) % 64
 
-            while self.chromosome[index2].id in used_ids2:
-                # print("index2: ", index2)
+                while self.chromosome[index2].id in used_ids2:
+                    # print("index2: ", index2)
+                    index2 = (index2+1) % 64
+                # print("selected index2: ", index2)
+                child2.chromosome[i] = self.chromosome[index2]
                 index2 = (index2+1) % 64
-            # print("selected index2: ", index2)
-            child2.chromosome[i] = self.chromosome[index2]
-            index2 = (index2+1) % 64
 
-        # check child fitness
-        child1.fitness()
-        child2.fitness()
+            # check child fitness
+            child1.fitness()
+            child2.fitness()
 
-        # create new generation copy of parents (could maybe just update generation?)
-        new_parent1 = copy.deepcopy(self)
-        new_parent1.generation +=1
+            # create new generation copy of parents (could maybe just update generation?)
+            new_parent1 = copy.deepcopy(self)
+            new_parent1.generation +=1
 
-        new_parent2 = copy.deepcopy(other_solution)
-        new_parent2.generation +=1
+            new_parent2 = copy.deepcopy(other_solution)
+            new_parent2.generation +=1
 
-        candidates = [new_parent1, new_parent2, child1, child2]
-        # print("\n\ncandidate solutions (p1, p2, c1, c2)")
-        # for solution in candidates:            
-        #     solution.show_solution()
+            candidates = [new_parent1, new_parent2, child1, child2]
+            # print("\n\ncandidate solutions (p1, p2, c1, c2)")
+            # for solution in candidates:            
+            #     solution.show_solution()
 
-        candidates = sorted(candidates, key=lambda candidates: candidates.score)
+            candidates = sorted(candidates, key=lambda candidates: candidates.score)
 
-        # pick best 2 out of children and parents
-        children = candidates[0:2]
-        # print("\n\npicked solutions")
-        # for solution in children:
-        #     solution.show_solution()
+            # pick best 2 out of children and parents
+            children = candidates[0:2]
+            # print("\n\npicked solutions")
+            # for solution in children:
+            #     solution.show_solution()
+        else:
+            new_parent1 = copy.deepcopy(self)
+            new_parent1.generation +=1
+
+            new_parent2 = copy.deepcopy(other_solution)
+            new_parent2.generation +=1
+            children = [new_parent1, new_parent2]
 
         return children
 
@@ -301,15 +309,8 @@ class Genetic_algorithm():
                 parent1 = self.select_parent(sum)
                 parent2 = self.select_parent(sum)
 
-                if random.random() < cross_rate:  # this is where you set the rate of crossover
-                    children = self.population[parent1].crossover(self.population[parent2], seed)
-                else:
-                    new_parent1 = copy.deepcopy(self.population[parent1])
-                    new_parent1.generation +=1
+                children = self.population[parent1].crossover(self.population[parent2], cross_rate)
 
-                    new_parent2 = copy.deepcopy(self.population[parent2])
-                    new_parent2.generation +=1
-                    children = [new_parent1, new_parent2]
                 #TODO: could try saving all parents + children for tournament survivor selection, or generation more children than parents, etc
 
                 # print("\nparents: ", parent1, parent2)
