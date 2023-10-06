@@ -44,7 +44,6 @@ class Piece():
     def show_piece(self):
         print("piece ", self.id, ": ", self.top, self.right, self.down, self.left)
             
-
 class Solution():
     def __init__(self, seed=None, generation=0):
         # print("creating new solution")
@@ -253,15 +252,14 @@ class Genetic_algorithm():
         #TODO: can try fitness proportionate, rank based, linear, exponential, tournament, uniform
         parent = -1
 
-        ran = random.random() * overall_score
+        rand = random.random() * overall_score
 
         sum = 0
         i = 0
-        while i < len(self.population) and sum < ran:
+        while i < len(self.population) and sum < rand:
             sum += self.population[i].score
             parent += 1
             i += 1
-        
         return parent
     
     # show curren generation information
@@ -273,7 +271,7 @@ class Genetic_algorithm():
         # self.population[0].show_solution()
 
     # solve
-    def evolve(self, mutation_rate, num_gens, seed):
+    def evolve(self, mutation_rate, cross_rate, num_gens, seed):
         print("\n\n================= init population =================")
         self.initialize_population(seed)
 
@@ -303,8 +301,7 @@ class Genetic_algorithm():
                 parent1 = self.select_parent(sum)
                 parent2 = self.select_parent(sum)
 
-
-                if random.random() < 1:  # this is where you set the rate of crossover
+                if random.random() < cross_rate:  # this is where you set the rate of crossover
                     children = self.population[parent1].crossover(self.population[parent2], seed)
                 else:
                     new_parent1 = copy.deepcopy(self.population[parent1])
@@ -382,8 +379,6 @@ finput.close()
 # for piece in seed:
 #     piece.show_piece()
 
-
-
 # sol = Solution(seed)
 
 # s1 = copy.deepcopy(sol)
@@ -420,18 +415,15 @@ finput.close()
 #     print("\nafter randomize:")
 #     sols[i].show_solution()
 
-
-
-
 # get parameters from the user (perhaps remove mutation when we automate it)
 population_size = int(input("enter population size: "))
 number_generations = int(input("enter number of generations: "))
 mutation_rate = float(input("enter mutation rate (0-100): "))/100
-
+cross_rate = float(input("enter crossover rate (0-100): "))/100
 
 GA = Genetic_algorithm(population_size)
 
-solution_found = GA.evolve(mutation_rate, number_generations, seed)
+solution_found = GA.evolve(mutation_rate, cross_rate, number_generations, seed)
 
 solution_found.show_solution()
 
