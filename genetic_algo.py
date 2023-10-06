@@ -304,9 +304,28 @@ class Genetic_algorithm():
 
             new_population = []
 
-            if generation % (num_gens/10) == 0:                
-                mutation_rate *= 1.02
-                cross_rate /= 1.02
+            if generation != 0 and generation % (num_gens/10) == 0:
+                print("adjusting rates")
+                num_prev = int(num_gens/10)
+                prev_sum = self.solution_track[-num_prev:]
+
+                print(prev_sum)
+                
+                prev_avg = 0
+                for i in range(len(prev_sum)):
+                    prev_avg += prev_sum[i]
+
+                prev_avg = prev_avg / num_prev
+
+                if sum < prev_avg:
+                    # current result better than current avg
+                    # mutation_rate += 1.02
+                    # cross_rate /= 1.02
+                    pass
+                else:
+                    # current result same or worse than current avg
+                    mutation_rate *= 1.02
+                    cross_rate /= 1.02
 
                 print("#######################################################################################")
 
