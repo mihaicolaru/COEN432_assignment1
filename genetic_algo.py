@@ -305,6 +305,11 @@ class Genetic_algorithm():
 
             new_population = []
 
+            if generation % (generation/3):                
+                mutation_rate *= 2
+                cross_rate /= 2
+                print("new mutation, crossover: ", mutation_rate, cross_rate)
+
             for new_solutions in range(0, self.population_size, 2):
                 parent1 = self.select_parent(sum)
                 parent2 = self.select_parent(sum)
