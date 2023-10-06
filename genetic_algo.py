@@ -307,8 +307,8 @@ class Genetic_algorithm():
             if generation != 0 and generation % (reassess_rate) == 0:
                 print("\n#######################################################################################")
                 print("\nadjusting rates")
-                num_prev = int(num_gens/reassess_rate)
-                prev_gen = self.solution_track[-num_prev:]
+                # num_prev = int(num_gens/reassess_rate)
+                prev_gen = self.solution_track[-reassess_rate:]
 
                 print("previous scores: ", prev_gen)
                 
@@ -316,9 +316,9 @@ class Genetic_algorithm():
                 for i in range(len(prev_gen)):
                     prev_avg += prev_gen[i]
 
-                prev_avg = prev_avg / num_prev
+                prev_avg = prev_avg / reassess_rate
 
-                print("average of previous ", num_prev, " generation scores: ", prev_avg)
+                print("average of previous ", reassess_rate, " generation scores: ", prev_avg)
                 print("current population score: ", sum)
 
                 if (prev_avg - sum) > (0.01 * prev_avg):
