@@ -305,7 +305,7 @@ class Genetic_algorithm():
             new_population = []
 
             if generation != 0 and generation % (reassess_rate) == 0:
-                print("#######################################################################################")
+                print("\n#######################################################################################")
                 print("\nadjusting rates")
                 num_prev = int(num_gens/reassess_rate)
                 prev_gen = self.solution_track[-num_prev:]
@@ -321,11 +321,12 @@ class Genetic_algorithm():
                 print("average of previous ", num_prev, " generation scores: ", prev_avg)
                 print("current population score: ", sum)
 
-                if (prev_avg - sum) > (0.1 * prev_avg):
+                if (prev_avg - sum) > (0.01 * prev_avg):
                     # current result better than current avg
-                    print("decrease mutation, increase crossover")
-                    # mutation_rate /= 1.02
-                    # cross_rate *= 1.02
+                    if (prev_avg - sum) > (0.1 * prev_avg):
+                        print("decrease mutation, increase crossover")
+                        mutation_rate /= 1.02
+                        # cross_rate *= 1.02
                 else:
                     # current result same or worse than current avg
                     print("increase mutation, decrease crossover")
