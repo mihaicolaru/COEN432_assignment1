@@ -321,12 +321,12 @@ class Genetic_algorithm():
                 print("average of previous ", reassess_rate, " generation scores: ", prev_avg)
                 print("current population score: ", sum)
 
-                if (prev_avg - sum) > (0.01 * prev_avg):
+                if (prev_avg - sum) > (0.03 * prev_avg):
                     # current result better than current avg
                     if (prev_avg - sum) > (0.1 * prev_avg):
                         print("decrease mutation, increase crossover")
                         mutation_rate /= 1.02
-                        # cross_rate *= 1.02
+                        cross_rate *= 1.02
                 else:
                     # current result same or worse than current avg
                     print("increase mutation, decrease crossover")
