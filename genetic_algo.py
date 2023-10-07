@@ -1,10 +1,10 @@
-# include libraries
+# Mihai Olaru 40111734 Amir Cherif 40047635
+
 import random
 import copy
 import matplotlib.pyplot as plt
 
-# define components
-
+# Define Square Piece object
 class Piece():
     def __init__(self, id, top, right, down, left):
         self.id = id
@@ -13,28 +13,32 @@ class Piece():
         self.down = down
         self.left = left
 
-    # turn by how much (+clockwise, -counter)
+    # Apply Rotation to Piece: turn by + or - (clockwise or counter clockwise)
     def turn(self, n):
         top = self.top
         right = self.right
         down = self.down
         left = self.left
 
+        # No rotation applied
         if n == 0:
             # print("no turn")
             pass
+        # 90 deg Clockwise Rotation applied
         if n == 1 or n == -3:
             # print("turn 1 or -3")
             self.top = left
             self.right = top
             self.down = right
             self.left = down
+        # 180 deg Clockwise Rotation applied
         if n == 2 or n == -2:
             # print("turn 2 or -2")
             self.top = down
             self.right = left
             self.down = top
             self.left = right
+        # 270 deg Clockwise Rotation applied
         if n == 3 or n == -1:
             # print("turn 3 or -1")
             self.top = right
@@ -42,9 +46,11 @@ class Piece():
             self.down = left
             self.left = top
 
+    # Display Square Piece (used for debugging)
     def show_piece(self):
         print("piece ", self.id, ": ", self.top, self.right, self.down, self.left)
-            
+
+# Define Individual Solution object            
 class Solution():
     def __init__(self, seed=None, generation=0):
         # print("creating new solution")
@@ -57,22 +63,21 @@ class Solution():
         if seed is not None:
             self.chromosome = seed
 
-    # shuffle chromosome
-    def randomize(self):
+    # randomize the chromosome
+    # used to mutate the chromosome(noise)
+    # used for population initialization
+    def randomize(self, mutaion_rate=0.05):
         random.shuffle(self.chromosome)
-
-        # fill the chromosome with pieces at shuffled locations, with possible rotations (maybe make dependant on mutation rate?)
+        # fill the chromosome with pieces at shuffled locations, 
+        # with possible rotations (dependant on mutation rate)
         for piece in self.chromosome:
-            if random.random() < 0.05:
+            if random.random() < mutation_rate:
                 piece.turn(random.randint(-3, 3))                
-                # piece.show_piece()
-        # self.show_solution()
-
+    
+    # Display Individual (used for debugging)
     def show_solution(self):
         print("\nsolution: ")
-        
         x = 0
-
         for piece in self.chromosome:
             if piece == None:
                 print("none piece")
@@ -81,54 +86,42 @@ class Solution():
                 print("spot: ", x)
                 piece.show_piece()
                 x += 1
-        
         print("score: ", self.score)
 
+    # compute fitness of the individual
     def fitness(self):
         sum_row = 0
         sum_col = 0
-
-        # count column and row mismatch, TODO: make this better ?
+        # count column and row mismatch
         for i in range(len(self.chromosome)):
-            # print(i)
             # skip every 8th piece
             if (i+1) % 8 != 0:
                 if self.chromosome[i].right != self.chromosome[i+1].left:
                     sum_row += 1
-
             # skip last row
             if i < 55:
                 if self.chromosome[i].down != self.chromosome[i+8].top:
                     sum_col += 1
-
+        # sum of row and column mismatch
         self.row_mismatch = sum_row
         self.col_mismatch = sum_col
-        # print("row mismatch: ", sum_row)
-        # print("column mismatch: ", sum_col)
-        self.score = sum_row + sum_col + 1 # somehow always missing 1 in the c++ driver
+        self.score = sum_row + sum_col + 1
 
-    # ordered crossover implementation
+    # Order 1 crossover implementation
     def crossover(self, other_solution, cross_rate):
-        #TODO: can also implement pmx, cycle, edge recomb
-
-        if random.random() < cross_rate:  # this is where you set the rate of crossover
-            # print("parents: ")
-            # self.show_solution()
-            # other_solution.show_solution()
-
-            # create copy of parents (to avoid modifying them)
+        # crossover only if rate is met
+        # otherwise return the parents
+        if random.random() < cross_rate:  
+            # create copy of parents (to avoid modifying the original parents)
+            # Avoid shallow copy (copy.copy) as it will copy the reference to the object
             child1 = copy.deepcopy(self)
             child1.generation = self.generation + 1
-
             child2 = copy.deepcopy(other_solution)
             child2.generation = self.generation + 1
 
-            # pick 2 crossover points in the chromosome
+            # pick 2 crossover points in the chromosome (Choose an arbitrary part from the first parent)
             crossover1 = random.randint(0, len(self.chromosome)-2)
             crossover2 = random.randint(crossover1+1, len(self.chromosome)-1)
-            # print("crossovers: ", crossover1, crossover2)
-
-            # isolate the segment from the parents
             segment1 = self.chromosome[crossover1:crossover2]
             segment2 = other_solution.chromosome[crossover1:crossover2]
 
@@ -138,70 +131,53 @@ class Solution():
             # identify the used pieces in each segment
             for i in range(len(segment1)):
                 used_ids1.add(segment1[i].id)
-                used_ids2.add(segment2[i].id)            
-            # print("segment1 piece ids: ", used_ids1)
-            # print("segment2 piece ids: ", used_ids2)
-
-            # fill in children chromosome with opposing parent pieces, skipping over pieces already in respective segment
+                used_ids2.add(segment2[i].id)
+            
+            # Copy the numbers that are not in the first part, to the first child
+            # - starting right from cut point of the copied part,
+            # - using the order of the second parent and wrapping around at the end
             index1 = crossover2
             index2 = crossover2
-            # print("crossover after segment: ", crossover2)
             for i in range(crossover2, len(self.chromosome)):
-                # print("sol index: ", i)
                 while other_solution.chromosome[index1].id in used_ids1:
-                    # print("index1: ", index1)
                     index1 = (index1+1) % 64
-                # print("selected index1: ", index1)
                 child1.chromosome[i] = other_solution.chromosome[index1]
                 index1 = (index1+1) % 64
-
+                
                 while self.chromosome[index2].id in used_ids2:
-                    # print("index2: ", index2)
                     index2 = (index2+1) % 64
-                # print("selected index2: ", index2)
                 child2.chromosome[i] = self.chromosome[index2]
                 index2 = (index2+1) % 64
 
             for i in range(crossover1):
-                # print("sol index: ", i)
                 while other_solution.chromosome[index1].id in used_ids1:
-                    # print("index1: ", index1)
                     index1 = (index1+1) % 64
-                # print("selected index1: ", index1)
                 child1.chromosome[i] = other_solution.chromosome[index1]
                 index1 = (index1+1) % 64
 
                 while self.chromosome[index2].id in used_ids2:
-                    # print("index2: ", index2)
                     index2 = (index2+1) % 64
-                # print("selected index2: ", index2)
                 child2.chromosome[i] = self.chromosome[index2]
                 index2 = (index2+1) % 64
 
-            # check child fitness
+            # Assess children fitness
             child1.fitness()
             child2.fitness()
 
             # create new generation copy of parents (could maybe just update generation?)
             new_parent1 = copy.deepcopy(self)
             new_parent1.generation +=1
-
             new_parent2 = copy.deepcopy(other_solution)
             new_parent2.generation +=1
 
+            # Survivor selection (tournament k=4)
             candidates = [new_parent1, new_parent2, child1, child2]
-            # print("\n\ncandidate solutions (p1, p2, c1, c2)")
-            # for solution in candidates:            
-            #     solution.show_solution()
-
+            # Sorting the candidates based on their fitness score
             candidates = sorted(candidates, key=lambda candidates: candidates.score)
-
             # pick best 2 out of children and parents
             children = candidates[0:2]
-            # print("\n\npicked solutions")
-            # for solution in children:
-            #     solution.show_solution()
-        else:
+
+        else: # just return the parents
             new_parent1 = copy.deepcopy(self)
             new_parent1.generation +=1
 
@@ -211,25 +187,36 @@ class Solution():
 
         return children
 
+    # mutate the individual using mutation rate
     def mutation(self, rate):
-        #TODO: can also implement swap, insert, scramble, inversion
+        # Scramble mutation (randomize the chromosome)
+        # Used to maintain diversity in the population
+        # helps avoid local minima
         if random.random() < rate:
             self.randomize()
-        else:
+        else: # otherwise mutate a random piece
             for i in range(len(self.chromosome)):
                 if random.random() < rate: 
-                    # print("turning piece: ", i)
+
                     self.chromosome[i].turn(random.randint(-3, 3))
-        
+
+    #    
+
+# Define Genetic Algorithm object
 class Genetic_algorithm():
     def __init__(self, population_size):
+        # user defined population size
         self.population_size = population_size
+        # current population
         self.population = []
-        # self.generation = 0
+        # overall top solution
         self.top_solution = None
+        # track the average score of the population
         self.solution_track = []
+        # track the best score of the population
         self.best_solution_track = []
 
+    # initialize population
     def initialize_population(self, seed):
         initial_solution = Solution(seed)
 
@@ -238,13 +225,8 @@ class Genetic_algorithm():
             sol = copy.deepcopy(initial_solution)
             sol.randomize()
             self.population.append(sol)
-        
-        # save current best solution (random)
-        self.top_solution = self.population[0]
-        # print("first population:")
-        # for solution in self.population:
-        #     solution.show_solution()
     
+    # order population by score
     def order_population(self):
         self.population = sorted(self.population, key=lambda population: population.score)
         
@@ -253,19 +235,20 @@ class Genetic_algorithm():
         if solution.score < self.top_solution.score:
             self.top_solution = solution
 
-    # computes generation total score (can also implement median perhaps?)
+    # computes generation total fitness
     def overall_score(self):
         sum = 0
         for solution in self.population:
             sum += solution.score
         return sum
     
+    # Roulette wheel selection
     def select_parent(self, overall_score):
-        #TODO: can try fitness proportionate, rank based, linear, exponential, tournament, uniform
         parent = -1
-
+        # High quality solutions more likely to be selected
+        # even worst in current population usually has non-zero 
+        # probability of being selected.
         rand = random.random() * overall_score
-
         sum = 0
         i = 0
         while i < len(self.population) and sum < rand:
@@ -276,68 +259,66 @@ class Genetic_algorithm():
     
     # show curren generation information
     def display(self):
-        print("generation: ", self.population[0].generation)
-        print("generation top (lowest) score: ", self.population[0].score)
-        print("current top (lowest) score: ", self.top_solution.score, self.top_solution.generation)
-        print("overall score: ", self.overall_score())
-        # self.population[0].show_solution()
+        print("Generation: ", self.population[0].generation)
+        print("Current Best Score: ", self.population[0].score)
+        print("Overall Best Score: ", self.top_solution.score, self.top_solution.generation)
+        print("Current Average Score: ", (self.overall_score()/self.population_size))
 
-    # solve
+    # evolve the population (parent selection, crossover, mutation, survivor selection)
     def evolve(self, mutation_rate, cross_rate, reassess_rate, num_gens, seed):
+        # save original rates
         omr = mutation_rate
         ocr = cross_rate
         print("\n\n================= init population =================")
+        # initialize population
         self.initialize_population(seed)
-
+        # compute fitness of initial population
         for solution in self.population:
-            # solution.show_solution()
             solution.fitness()
-
+        # order population by score
         self.order_population()
-
+        # compute top solution
         self.top_solution = self.population[0]
-
+        # show current generation stats
         self.display()
 
         print("\n\n================= start evolving =================")
-
-        # iterate to evolve
+        # iterate to evolve over the number of generations
         for generation in range(num_gens):
-            # for solution in self.population:
-            #     solution.show_solution()
-
+            # compute generation total fitness
             sum = self.overall_score()
-
             new_population = []
-
+            # Reassess mutation and crossover rates every specific number of generations
+            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            # Please Note:
+            # Crossover & Mutation play different roles in the GA depending on:
+            # -> The Phase of Evolution 
+            # -> Diversity of the population
+            # => Below we try to adjust the rates based on the current phase of evolution
+            # => Initial rates selected based on experimentation 
+            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             if generation != 0 and generation % (reassess_rate) == 0:
                 print("\n\n#######################################################################################")
                 print("\nadjusting rates")
-                # num_prev = int(num_gens/reassess_rate)
+                # compute average of previous reassess_rate generations
                 prev_gen = self.solution_track[-reassess_rate:]
-
-                # print("previous scores: ", prev_gen)
-                
                 prev_avg = 0
                 for i in range(len(prev_gen)):
                     prev_avg += prev_gen[i]
-
                 prev_avg = prev_avg / reassess_rate
 
                 print("average of previous ", reassess_rate, " generation scores: ", prev_avg)
                 print("current population score: ", sum)
 
+                # if current result better than current avg by 3% or more
                 if (prev_avg - sum) > (0.03 * prev_avg):
-                    # current result better than current avg                    
+                    # if current result better than current avg by 1% - 3%
                     if (prev_avg - sum) > (0.1 * prev_avg):
-                        # print("decrease mutation, increase crossover")
-                        # mutation_rate /= 1.02
-                        # cross_rate *= 1.02
                         print("no change in rates")
                     else:
                         print("no change in rates")
                 else:
-                    # current result same or worse than current avg
+                    # current result same or worse than current avg by 2%
                     print("increase mutation, decrease crossover")
                     mutation_rate *= 1.02
                     cross_rate /= 1.02
@@ -345,139 +326,81 @@ class Genetic_algorithm():
                     if sum/self.population_size > (2 * self.top_solution.score):
                         print("resetting mutation and crossover rate")
                         mutation_rate = omr
-                        cross_rate = ocr
-
-                
+                        cross_rate = ocr 
                 print("new mutation", mutation_rate*100,"\ncrossover: ", cross_rate*100)
 
                 print("\n#######################################################################################")
 
+            # Iterate over the population to create next generation
             for new_solutions in range(0, self.population_size, 2):
+                # select parents using roulette wheel selection
                 parent1 = self.select_parent(sum)
                 parent2 = self.select_parent(sum)
-
+                # crossover using order 1 crossover and rate of crossover
                 children = self.population[parent1].crossover(self.population[parent2], cross_rate)
-
-                #TODO: could try saving all parents + children for tournament survivor selection, or generation more children than parents, etc
-
-                # print("\nparents: ", parent1, parent2)
-
-                # print("\nchildren:")
-                # children[0].show_solution()
-                # children[1].show_solution()
-
-                child1 = children[0] #copy.deepcopy(children[0])
-                child2 = children[1] #copy.deepcopy(children[1])
-
-                #TODO: perhaps check if mutation goes in the right direciton, or have mutation rate change
+                child1 = children[0] 
+                child2 = children[1]
+                # mutate children using mutation rate
                 child1.mutation(mutation_rate)
                 child2.mutation(mutation_rate)
-
+                # add children to new population
                 new_population.append(child1)
                 new_population.append(child2)
 
             print("\n\n================= new generation =================") 
-            # for solution in new_population:
-            #     # solution.show_solution()
-            #     solution.fitness()
-
-            # new_sum = 0
-            # for solution in new_population:
-            #     new_sum += solution.score
-
-            # if new_sum < sum:
-            #     print("picked new pop")
-            #     self.population = new_population
-            #     self.order_population()
-            #     self.compute_top(self.population[0])
-            # else:
-            #     print("picked old pop")
-            #     for solution in self.population:
-            #         solution.generation = self.population[0].generation + 1
-
             self.population = new_population
-
+            # compute fitness of new population
             for solution in self.population:
-                # solution.show_solution()
                 solution.fitness()
-
+            # order population by score
             self.order_population()
-
+            # update best overall solution
             self.compute_top(self.population[0])                
-            
+            # track the average score of the population
             self.solution_track.append(sum)
+            # track the best score of the population
             self.best_solution_track.append(self.top_solution.score)
-
-            self.display()
-
-            # self.generation += 1            
-
+            # show current generation stats
+            self.display()       
         print("top solution score: ", self.top_solution.score)
-
-
         return self.top_solution
 
-        
-# # main
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~       Driver Code     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Read the original square pieces from Input file
 finput = open("Ass1Input.txt", "r")
 seed = []
+# read 64 pieces
 for i in range(0, 64):
     seed.append(Piece(i, finput.read(1), finput.read(1), finput.read(1), finput.read(1)))
     finput.read(1)
 finput.close()
-# for piece in seed:
-#     piece.show_piece()
 
-# sol = Solution(seed)
-
-# s1 = copy.deepcopy(sol)
-# print("solution 1:")
-# s1.randomize()
-# s1.show_solution()
-
-# s2 = copy.deepcopy(sol)
-# print("solution 2:")
-# s2.randomize()
-# s2.show_solution()
-
-# children = s1.crossover(s2, seed)
-
-# print("child 1:")
-# children[0].show_solution()
-
-# print("child 2:")
-# children[1].show_solution()
-
-# sols = []
-
-# initial_solution = Solution(seed)
-
-# # Create copies of the initial solution and append them to sols
-# for i in range(3):
-#     sol = copy.deepcopy(initial_solution)
-#     sols.append(sol)
-
-# for i in range(0,3):
-#     print("\n\nbefore randomize:")
-#     sols[i].show_solution()
-#     sols[i].randomize()
-#     print("\nafter randomize:")
-#     sols[i].show_solution()
-
-# get parameters from the user (perhaps remove mutation when we automate it)
+# User defined parameters
 population_size = int(input("enter population size: "))
 number_generations = int(input("enter number of generations: "))
-mutation_rate = float(input("enter mutation rate (0-100): "))/100
-cross_rate = float(input("enter crossover rate (0-100): "))/100
-reassess_rate = int(input("reassess rate (1 - number of generations): "))
-# mutation_rate = float(0.1)/100
-# cross_rate = float(100)/100
 
+# convert mutation and crossover rates from percentages to float
+# Please Note: Initial rates selected based on experimentation 
+mutation_rate = 0.1/100
+cross_rate = 100/100
 
+# adjust reassess rate based on number of generations
+# Please Note: Current phase of evolution selected based on experimentation
+if number_generations < 100:
+    reassess_rate = 10
+elif number_generations < 500:
+    reassess_rate = 50
+else:
+    reassess_rate = 100
+print("Reassess Rate: ", reassess_rate)
+# create GA object
 GA = Genetic_algorithm(population_size)
-
+# evolve the population
 solution_found = GA.evolve(mutation_rate, cross_rate, reassess_rate, number_generations, seed)
-
+# display final solution
 solution_found.show_solution()
 
 # write solution to file
@@ -485,7 +408,6 @@ foutput = open("Ass1Output.txt", "w")
 solution_str = "Mihai Olaru 40111734 Amir Cherif 40047635\n"
 for i in range(len(solution_found.chromosome)):
     piece = str(solution_found.chromosome[i].top) + str(solution_found.chromosome[i].right) + str(solution_found.chromosome[i].down) + str(solution_found.chromosome[i].left)
-    # print("piece: ", solution_found.chromosome[i].id)
     if i == 63:
         break
     if (i + 1) % 8 == 0:
@@ -493,28 +415,22 @@ for i in range(len(solution_found.chromosome)):
     else:
         solution_str += piece + " "
 solution_str += piece
-# print(solution_str)
 foutput.write(solution_str)
 foutput.close()
 
-# print("GA.solution_track", GA.solution_track)
-# print("GA.best_solution_track", GA.best_solution_track)
-
+# plot the average and best score of the population over the generations
 plt.plot(list(range(number_generations)), GA.best_solution_track, label = "Best Score")
-
+# compute average score over lifetime of the population
 avg_score = []
 for i in range(len(GA.solution_track)):
     avg_score.append(GA.solution_track[i]/population_size)
-
+# plot the average score
 plt.plot(list(range(number_generations)), avg_score, label = "Average Score")
-
 # naming the x axis 
-plt.xlabel('Generation') 
+plt.xlabel('Generation')
 # naming the y axis 
-plt.ylabel('Mismatches') 
+plt.ylabel('Mismatches')
 # show a legend on the plot 
 plt.legend()
-# function to show the plot 
-# plt.show()
 # function to save to file
 plt.savefig('Ass1Lifetime.png')
