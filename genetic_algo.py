@@ -105,7 +105,7 @@ class Solution():
         self.col_mismatch = sum_col
         # print("row mismatch: ", sum_row)
         # print("column mismatch: ", sum_col)
-        self.score = sum_row + sum_col        
+        self.score = sum_row + sum_col + 1 # somehow always missing 1 in the c++ driver
 
     # ordered crossover implementation
     def crossover(self, other_solution, cross_rate):
@@ -213,10 +213,13 @@ class Solution():
 
     def mutation(self, rate):
         #TODO: can also implement swap, insert, scramble, inversion
-        for i in range(len(self.chromosome)):
-            if random.random() < rate: 
-                # print("turning piece: ", i)
-                self.chromosome[i].turn(random.randint(-3, 3))
+        if random.random() < rate:
+            self.randomize()
+        else:
+            for i in range(len(self.chromosome)):
+                if random.random() < rate: 
+                    # print("turning piece: ", i)
+                    self.chromosome[i].turn(random.randint(-3, 3))
         
 class Genetic_algorithm():
     def __init__(self, population_size):
@@ -281,6 +284,8 @@ class Genetic_algorithm():
 
     # solve
     def evolve(self, mutation_rate, cross_rate, reassess_rate, num_gens, seed):
+        omr = mutation_rate
+        ocr = cross_rate
         print("\n\n================= init population =================")
         self.initialize_population(seed)
 
@@ -306,12 +311,12 @@ class Genetic_algorithm():
             new_population = []
 
             if generation != 0 and generation % (reassess_rate) == 0:
-                print("\n#######################################################################################")
+                print("\n\n#######################################################################################")
                 print("\nadjusting rates")
                 # num_prev = int(num_gens/reassess_rate)
                 prev_gen = self.solution_track[-reassess_rate:]
 
-                print("previous scores: ", prev_gen)
+                # print("previous scores: ", prev_gen)
                 
                 prev_avg = 0
                 for i in range(len(prev_gen)):
@@ -323,16 +328,24 @@ class Genetic_algorithm():
                 print("current population score: ", sum)
 
                 if (prev_avg - sum) > (0.03 * prev_avg):
-                    # current result better than current avg
+                    # current result better than current avg                    
                     if (prev_avg - sum) > (0.1 * prev_avg):
-                        print("decrease mutation, increase crossover")
-                        mutation_rate /= 1.02
-                        cross_rate *= 1.02
+                        # print("decrease mutation, increase crossover")
+                        # mutation_rate /= 1.02
+                        # cross_rate *= 1.02
+                        print("no change in rates")
+                    else:
+                        print("no change in rates")
                 else:
                     # current result same or worse than current avg
                     print("increase mutation, decrease crossover")
                     mutation_rate *= 1.02
                     cross_rate /= 1.02
+
+                    if sum/self.population_size > (2 * self.top_solution.score):
+                        print("resetting mutation and crossover rate")
+                        mutation_rate = omr
+                        cross_rate = ocr
 
                 
                 print("new mutation", mutation_rate*100,"\ncrossover: ", cross_rate*100)
@@ -484,15 +497,16 @@ solution_str += piece
 foutput.write(solution_str)
 foutput.close()
 
-print("GA.solution_track", GA.solution_track)
-print("GA.best_solution_track", GA.best_solution_track)
+# print("GA.solution_track", GA.solution_track)
+# print("GA.best_solution_track", GA.best_solution_track)
 
-plt.plot(number_generations, list(GA.best_solution_track), label = "Best Score")
+plt.plot(list(range(number_generations)), GA.best_solution_track, label = "Best Score")
 
 avg_score = []
 for i in range(len(GA.solution_track)):
     avg_score.append(GA.solution_track[i]/population_size)
-plt.plot(number_generations, list(avg_score), label = "Average Score")
+
+plt.plot(list(range(number_generations)), avg_score, label = "Average Score")
 
 # naming the x axis 
 plt.xlabel('Generation') 
@@ -501,4 +515,6 @@ plt.ylabel('Mismatches')
 # show a legend on the plot 
 plt.legend()
 # function to show the plot 
-plt.show()
+# plt.show()
+# function to save to file
+plt.savefig('Ass1Lifetime.png')
