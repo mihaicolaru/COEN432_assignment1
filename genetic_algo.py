@@ -203,8 +203,6 @@ class Solution():
 
                     self.chromosome[i].turn(random.randint(-3, 3))
 
-    #    
-
 # Define Genetic Algorithm object
 class Genetic_algorithm():
     def __init__(self, population_size):
@@ -264,7 +262,7 @@ class Genetic_algorithm():
     def display(self):
         print("Generation: ", self.population[0].generation)
         print("Current Best Score: ", self.population[0].score)
-        print("Overall Best Score: ", self.top_solution.score, self.top_solution.generation)
+        print("Overall Best Score: ", self.top_solution.score, " generation: ", self.top_solution.generation)
         print("Current Average Score: ", (self.overall_score()/self.population_size))
 
     # evolve the population (parent selection, crossover, mutation, survivor selection)
@@ -314,7 +312,7 @@ class Genetic_algorithm():
                 print("current population score: ", sum)
 
                 # if current result better than current avg by 3% or more
-                if (prev_avg - sum) > (0.03 * prev_avg):
+                if (prev_avg - sum) > (0.01 * prev_avg):
                     # if current result better than current avg by 1% - 3%
                     if (prev_avg - sum) > (0.1 * prev_avg):
                         print("no change in rates")
