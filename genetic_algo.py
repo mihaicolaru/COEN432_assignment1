@@ -367,6 +367,8 @@ def program_exit(sig, frame):
     solution_found = GA.top_solution
 
     print("solution found on generation: ", solution_found.generation, "\nscore: ", solution_found.score)
+    # display final solution
+    solution_found.show_solution()
 
     # write solution to file
     foutput = open("Ass1Output.txt", "w")
