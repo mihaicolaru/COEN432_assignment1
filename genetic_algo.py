@@ -4,6 +4,9 @@ import random
 import copy
 import matplotlib.pyplot as plt
 
+import signal
+import sys
+
 # Define Square Piece object
 class Piece():
     def __init__(self, id, top, right, down, left):
@@ -366,9 +369,57 @@ class Genetic_algorithm():
         return self.top_solution
 
 
+# detect early termination, return current best solution
+def program_exit(sig, frame):
+    print("\n\nGA terminated early, returning current best solution")
+
+    # use current best solution
+    solution_found = GA.top_solution
+
+    print("solution found on generation: ", solution_found.generation, "\nscore: ", solution_found.score)
+    solution_found.show_solution()
+
+    # write solution to file
+    foutput = open("Ass1Output.txt", "w")
+    solution_str = "Mihai Olaru 40111734 Amir Cherif 40047635\n"
+    for i in range(len(solution_found.chromosome)):
+        piece = str(solution_found.chromosome[i].top) + str(solution_found.chromosome[i].right) + str(solution_found.chromosome[i].down) + str(solution_found.chromosome[i].left)
+        if i == 63:
+            break
+        if (i + 1) % 8 == 0:
+            solution_str += piece + "\n"
+        else:
+            solution_str += piece + " "
+    solution_str += piece
+    foutput.write(solution_str)
+    foutput.close()
+
+    # plot the average and best score of the population over the generations so far
+    plt.plot(list(range(len(GA.best_solution_track))), GA.best_solution_track, label = "Best Score")
+    # compute average score over lifetime of the population
+    avg_score = []
+    for i in range(len(GA.solution_track)):
+        avg_score.append(GA.solution_track[i]/population_size)
+    # plot the average score
+    plt.plot(list(range(len(GA.solution_track))), avg_score, label = "Average Score")
+    # naming the x axis 
+    plt.xlabel('Generation')
+    # naming the y axis 
+    plt.ylabel('Mismatches')
+    # show a legend on the plot 
+    plt.legend()
+    # function to save to file
+    plt.savefig('Ass1Lifetime.png')
+
+
+    sys.exit(0)
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~       Driver Code     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# register function on early program termination signal
+signal.signal(signal.SIGINT, program_exit)
+
 # Read the original square pieces from Input file
 finput = open("Ass1Input.txt", "r")
 seed = []
@@ -399,38 +450,44 @@ print("Reassess Rate: ", reassess_rate)
 # create GA object
 GA = Genetic_algorithm(population_size)
 # evolve the population
-solution_found = GA.evolve(mutation_rate, cross_rate, reassess_rate, number_generations, seed)
-# display final solution
-solution_found.show_solution()
 
-# write solution to file
-foutput = open("Ass1Output.txt", "w")
-solution_str = "Mihai Olaru 40111734 Amir Cherif 40047635\n"
-for i in range(len(solution_found.chromosome)):
-    piece = str(solution_found.chromosome[i].top) + str(solution_found.chromosome[i].right) + str(solution_found.chromosome[i].down) + str(solution_found.chromosome[i].left)
-    if i == 63:
-        break
-    if (i + 1) % 8 == 0:
-        solution_str += piece + "\n"
-    else:
-        solution_str += piece + " "
-solution_str += piece
-foutput.write(solution_str)
-foutput.close()
+# if terminated early, raise keyboard interrupt signal
+try:
+    solution_found = GA.evolve(mutation_rate, cross_rate, reassess_rate, number_generations, seed)
+    # display final solution
+    solution_found.show_solution()
 
-# plot the average and best score of the population over the generations
-plt.plot(list(range(number_generations)), GA.best_solution_track, label = "Best Score")
-# compute average score over lifetime of the population
-avg_score = []
-for i in range(len(GA.solution_track)):
-    avg_score.append(GA.solution_track[i]/population_size)
-# plot the average score
-plt.plot(list(range(number_generations)), avg_score, label = "Average Score")
-# naming the x axis 
-plt.xlabel('Generation')
-# naming the y axis 
-plt.ylabel('Mismatches')
-# show a legend on the plot 
-plt.legend()
-# function to save to file
-plt.savefig('Ass1Lifetime.png')
+    # write solution to file
+    foutput = open("Ass1Output.txt", "w")
+    solution_str = "Mihai Olaru 40111734 Amir Cherif 40047635\n"
+    for i in range(len(solution_found.chromosome)):
+        piece = str(solution_found.chromosome[i].top) + str(solution_found.chromosome[i].right) + str(solution_found.chromosome[i].down) + str(solution_found.chromosome[i].left)
+        if i == 63:
+            break
+        if (i + 1) % 8 == 0:
+            solution_str += piece + "\n"
+        else:
+            solution_str += piece + " "
+    solution_str += piece
+    foutput.write(solution_str)
+    foutput.close()
+
+    # plot the average and best score of the population over the generations
+    plt.plot(list(range(number_generations)), GA.best_solution_track, label = "Best Score")
+    # compute average score over lifetime of the population
+    avg_score = []
+    for i in range(len(GA.solution_track)):
+        avg_score.append(GA.solution_track[i]/population_size)
+    # plot the average score
+    plt.plot(list(range(number_generations)), avg_score, label = "Average Score")
+    # naming the x axis 
+    plt.xlabel('Generation')
+    # naming the y axis 
+    plt.ylabel('Mismatches')
+    # show a legend on the plot 
+    plt.legend()
+    # function to save to file
+    plt.savefig('Ass1Lifetime.png')
+
+except KeyboardInterrupt:
+    print("ctrl+c pressed, exciting...")
