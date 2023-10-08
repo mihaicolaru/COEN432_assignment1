@@ -25,25 +25,21 @@ class Piece():
 
         # No rotation applied
         if n == 0:
-            # print("no turn")
             pass
         # 90 deg Clockwise Rotation applied
         if n == 1 or n == -3:
-            # print("turn 1 or -3")
             self.top = left
             self.right = top
             self.down = right
             self.left = down
         # 180 deg Clockwise Rotation applied
         if n == 2 or n == -2:
-            # print("turn 2 or -2")
             self.top = down
             self.right = left
             self.down = top
             self.left = right
         # 270 deg Clockwise Rotation applied
         if n == 3 or n == -1:
-            # print("turn 3 or -1")
             self.top = right
             self.right = down
             self.down = left
@@ -313,11 +309,7 @@ class Genetic_algorithm():
 
                 # if current result better than current avg by 3% or more
                 if (prev_avg - sum) > (0.01 * prev_avg):
-                    # if current result better than current avg by 1% - 3%
-                    if (prev_avg - sum) > (0.1 * prev_avg):
-                        print("no change in rates")
-                    else:
-                        print("no change in rates")
+                    print("no change in rates")
                 else:
                     # current result same or worse than current avg by 2%
                     print("increase mutation, decrease crossover")
@@ -375,7 +367,6 @@ def program_exit(sig, frame):
     solution_found = GA.top_solution
 
     print("solution found on generation: ", solution_found.generation, "\nscore: ", solution_found.score)
-    solution_found.show_solution()
 
     # write solution to file
     foutput = open("Ass1Output.txt", "w")
@@ -409,8 +400,8 @@ def program_exit(sig, frame):
     # function to save to file
     plt.savefig('Ass1Lifetime.png')
 
-
     sys.exit(0)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~       Driver Code     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -447,10 +438,10 @@ else:
 print("Reassess Rate: ", reassess_rate)
 # create GA object
 GA = Genetic_algorithm(population_size)
-# evolve the population
 
 # if terminated early, raise keyboard interrupt signal
 try:
+    # evolve the population
     solution_found = GA.evolve(mutation_rate, cross_rate, reassess_rate, number_generations, seed)
     # display final solution
     solution_found.show_solution()
